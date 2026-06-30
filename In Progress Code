@@ -67,7 +67,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         stimpath = [pwd filesep 'stimuli'];
     end
 
-    questions = readlines([stimpath filesep 'FiveTestSentences.txt']);
+    sentenceTable = readtable([stimpath filesep 'FiveTestSentences.csv']);
     order = readtable("order_q3_i5_s2026.txt"); % Make a few orders to counterbalance across subjects
     ntrials = 5; % make a set of orders for each run
     j = 1 + (4-1).*rand(ntrials,1); % update jitter 
@@ -112,10 +112,14 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         type = string(order.type(idx)); % either question/item
         value_idx = order.value(idx);
 
-        words = split(sentence);
-        picIndex = find(words == picWord);
+        sentence = sentenceTable.Sentence{value_idx};
+        picIndex = sentenceTable.RebusIndex(value_idx);
+        imageFile = sentenceTable.ImageFile{value_idx};
 
-        img = imread(imageFile);
+        words = split(sentence);
+        
+        imagePath = fullfile(stimpath, "images", imageFile);
+        img = imread(imagePath);
         tex = Screen('MakeTexture', window, img);
 
     sentence_onset_abs = NaN;

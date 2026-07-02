@@ -8,7 +8,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     %   -log string path to send log file
 
     close all; clc; sca; rng(run);   % starting experiment
-
+	% adding a comment here for GitHub demo
    
     % Creating the log folder if it doesn't exist
     if ~isfolder(log)

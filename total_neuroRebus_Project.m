@@ -67,7 +67,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         stimpath = [pwd filesep 'stimuli'];
     end
 
-    sentenceTable = readtable([stimpath filesep 'FiveTestSentences.csv']);
+    sentenceTable = readtable([stimpath filesep 'FiveTestSentences.txt']);
     order = readtable("order_q3_i5_s2026.txt"); % Make a few orders to counterbalance across subjects
     ntrials = 5; % make a set of orders for each run
     j = 1 + (4-1).*rand(ntrials,1); % update jitter 

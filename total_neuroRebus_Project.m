@@ -8,7 +8,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     %   -log string path to send log file
 
     close all; clc; sca; rng(run);   % starting experiment
-	% adding a comment here for GitHub demo
+
    
     % Creating the log folder if it doesn't exist
     if ~isfolder(log)
@@ -27,7 +27,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     diary(char(logfile));
 
     %% Constants
-    STIM_DUR = 2; % how long (in seconds) will any stimulus display on the screen
+    STIM_DUR = 5; % how long (in seconds) will any stimulus display on the screen
     if ~dev
         WORD_SIZE = 75;
     elseif dev
@@ -67,7 +67,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         stimpath = [pwd filesep 'stimuli'];
     end
 
-    sentenceTable = readtable([stimpath filesep 'FiveTestSentences.txt']);
+    stimuli = readtable([stimpath filesep 'FiveTestSentences.txt']);
     order = readtable("order_q3_i5_s2026.txt"); % Make a few orders to counterbalance across subjects
     ntrials = 5; % make a set of orders for each run
     j = 1 + (4-1).*rand(ntrials,1); % update jitter 
@@ -83,11 +83,11 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         black = BlackIndex(screenNumber);
         grey = white / 2;
 
-        % if dev
+        if dev
             Screen('Preference', 'SkipSyncTests', 1);
-        % else
-        %     Screen('Preference', 'SkipSyncTests', 0);
-        % end
+        else
+            Screen('Preference', 'SkipSyncTests', 0);
+        end
 
         if dev
             screenRect = [120 50 520 300];
@@ -99,37 +99,46 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         
 
     %starting experiment
+    DrawFormattedText(window, 'Waiting for scanner...', ...
+        'center', 'center', TEXT_COLOR);
+        Screen('Flip', window);
+
     if ~dev
-
-        DrawFormattedText(window, 'Waiting for scanner...', ...
-            'center', 'center', TEXT_COLOR);
-            Screen('Flip', window);
-
         run_start_time = wait_for_trigger_kbqueue_all_dvc;
+    else
+        run_start_time = GetSecs;
+    end
 
     event_idx = 0;
 
-    else
-        runs_start_time = GetSecs;
-    end
-
     for idx = 1:ntrials
-        type = string(order.type(idx)); % either question/item
+
+        type = string(order.type(idx));
         value_idx = order.value(idx);
 
-        sentence = sentenceTable.Sentence{value_idx};
-        picIndex = sentenceTable.RebusIndex(value_idx);
-        imageFile = sentenceTable.ImageFile{value_idx};
+        % Get sentence information from table
+        sentence = stimuli.Sentence{value_idx};
+        picIndex = stimuli.RebusIndex(value_idx);
 
+        % Split sentence into words
         words = split(sentence);
-        
-        imagePath = fullfile(stimpath, "images", imageFile);
-        img = imread(imagePath);
+
+        % Determine which word is the rebus word
+        picWord = regexprep(words(picIndex), '[^\w]', '');
+
+        % Load image
+        imageFile = fullfile(stimpath, 'images', ...
+        [lower(char(picWord)) '.jpg']);
+
+        disp(imageFile)
+
+        img = imread(imageFile);
         tex = Screen('MakeTexture', window, img);
 
-    sentence_onset_abs = NaN;
+        sentence_onset_abs = NaN;
 
     % Present Sentence
+    wordDuration = STIM_DUR / length(words);
     for wordNum = 1:length(words)
 
         Screen('FillRect', window, grey);

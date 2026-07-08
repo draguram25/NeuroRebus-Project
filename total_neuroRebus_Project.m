@@ -99,14 +99,19 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         
 
     %starting experiment
-    DrawFormattedText(window, 'Waiting for scanner...', ...
-        'center', 'center', TEXT_COLOR);
-        Screen('Flip', window);
-
     if ~dev
+
+        DrawFormattedText(window, 'Waiting for scanner...', ...
+            'center', 'center', TEXT_COLOR);
+            Screen('Flip', window);
+
         run_start_time = wait_for_trigger_kbqueue_all_dvc;
 
     event_idx = 0;
+
+    else
+        runs_start_time = GetSecs;
+    end
 
     for idx = 1:ntrials
         type = string(order.type(idx)); % either question/item
@@ -208,7 +213,6 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         end
 
 
-    end
 end
 
 

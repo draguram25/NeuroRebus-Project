@@ -27,11 +27,12 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     diary(char(logfile));
 
     %% Constants
-    STIM_DUR = 5; % how long (in seconds) will any stimulus display on the screen
+    STIM_DUR = 0.10; % how long (in seconds) will any stimulus display on the screen
+        % 10-12 words per second (based on Potter 1986)
     if ~dev
         WORD_SIZE = 75;
     elseif dev
-        WORD_SIZE = 50;
+        WORD_SIZE = 30;
     end
     FIXATION_SIZE = 100;
     FIXATION_CHAR = '+';
@@ -134,17 +135,29 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
 
         img = imread(imageFile);
         tex = Screen('MakeTexture', window, img);
+        [h, w, ~] = size(img);
 
         sentence_onset_abs = NaN;
 
     % Present Sentence
-    wordDuration = STIM_DUR / length(words);
+    wordDuration = STIM_DUR;
     for wordNum = 1:length(words)
 
         Screen('FillRect', window, grey);
 
         if wordNum == picIndex
-            Screen('DrawTexture', window, tex);
+            if dev
+                scale = 0.4;   % adjust until it looks right
+            else
+                scale = 1.0;
+            end
+
+            destRect = CenterRectOnPointd( ...
+            [0 0 w*scale h*scale], ...
+            windowRect(3)/2, ...
+            windowRect(4)/2);
+
+            Screen('DrawTexture', window, tex, [], destRect);    
         else
             Screen('TextSize', window, WORD_SIZE);
             DrawFormattedText(window, ...

@@ -27,8 +27,8 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     diary(char(logfile));
 
     %% Constants
-    STIM_DUR = 0.10; % how long (in seconds) will any stimulus display on the screen
-        % 10-12 words per second (based on Potter 1986)
+    WORD_TIME = 0.450; % seconds per word, matching the language localizer
+    RESPONSE_TIME = 1.500; % seconds allotted for the plausibility response
     if ~dev
         WORD_SIZE = 75;
     elseif dev
@@ -140,7 +140,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         sentence_onset_abs = NaN;
 
     % Present Sentence
-    wordDuration = STIM_DUR;
+    wordDuration = WORD_TIME;
     for wordNum = 1:length(words)
 
         Screen('FillRect', window, grey);
@@ -191,7 +191,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     response_onset_abs = Screen('Flip', window);
 
     [keypress, rt] = collect_response_until( ...
-        response_onset_abs + STIM_DUR, ...
+        response_onset_abs + RESPONSE_TIME, ...
         response_onset_abs, ...
         escapeKey ...
     );
@@ -202,7 +202,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     results(event_idx,:) = { ...
         idx, ...
         sentence_onset, ...
-        STIM_DUR, ...
+        length(words) * WORD_TIME, ...
         "sentence", ...
         sentence, ...
         keypress, ...
@@ -236,5 +236,3 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
 
 
 end
-
-

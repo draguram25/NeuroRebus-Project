@@ -15,6 +15,10 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     mkdir(log);
     end
 
+    if ~isfolder(output)
+    mkdir(output);
+    end
+
     % get today's date
     date = datetime('now');
     date.Format = 'MM-dd-yyyy';
@@ -38,7 +42,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     FIXATION_CHAR = '+';
     TEXT_COLOR = [255 255 255]; % white
 
-    %% Output file (saving everything in a table)
+    % Output file (saving everything in a table)
     date_str = char(datetime("today", "Format", "yyyy-MM-dd"));
     filename = sprintf( ...
         'wiscs_subject-%s_run-%d_date-%s.csv', ...
@@ -110,6 +114,31 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         run_start_time = GetSecs;
     end
 
+    %Initialize subject data structure
+        subj_data.subject = subject;
+        subj_data.run = run;
+        subj_data.practice = practice;
+
+        subj_data.run_onset = run_start_time;
+
+        subj_data.trial_onsets = nan(ntrials,1);
+        subj_data.response_onsets = nan(ntrials,1);
+        subj_data.response_times = nan(ntrials,1);
+
+        subj_data.keypress = strings(ntrials,1);
+        subj_data.rt = nan(ntrials,1);
+
+        subj_data.sentences = strings(ntrials,1);
+        subj_data.rebus_word = strings(ntrials,1);
+        subj_data.rebus_index = nan(ntrials,1);
+
+        subj_data.fixation_onsets = nan(ntrials,1);
+
+    %Create .mat file
+        matfile = fullfile(output, ...
+            sprintf('subject-%s_run-%d.mat', char(subject), run));
+        save(matfile, 'subj_data');
+try
     event_idx = 0;
 
     for idx = 1:ntrials
@@ -126,6 +155,10 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
 
         % Determine which word is the rebus word
         picWord = regexprep(words(picIndex), '[^\w]', '');
+
+        subj_data.sentences(idx) = string(sentence);
+        subj_data.rebus_word(idx) = string(picWord);
+        subj_data.rebus_index(idx) = picIndex;
 
         % Load image
         imageFile = fullfile(stimpath, 'images', ...
@@ -171,6 +204,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
 
         if wordNum == 1
             sentence_onset_abs = flipTime;
+            subj_data.trial_onsets(idx) = sentence_onset_abs;
         end
 
         WaitSecs(wordDuration);
@@ -189,12 +223,20 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         TEXT_COLOR);
 
     response_onset_abs = Screen('Flip', window);
+    subj_data.response_onsets(idx) = response_onset_abs;
+
 
     [keypress, rt] = collect_response_until( ...
         response_onset_abs + RESPONSE_TIME, ...
         response_onset_abs, ...
         escapeKey ...
     );
+     subj_data.keypress(idx) = string(keypress);
+     subj_data.rt(idx) = rt;
+     if ~isnan(rt)
+        subj_data.response_times(idx) = response_onset_abs + rt;
+     end
+
     
     % Save Sentence
     event_idx = event_idx + 1;
@@ -219,6 +261,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         TEXT_COLOR);
 
     fix_onset_abs = Screen('Flip', window);
+    subj_data.fixation_onsets(idx) = fix_onset_abs;
     fix_onset = fix_onset_abs - run_start_time;
     WaitSecs(j(idx));
     event_idx = event_idx + 1;
@@ -232,7 +275,17 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         "", ...
         NaN ...
     };
-        end
+    end
 
+    subj_data.runtime = GetSecs - run_start_time;
+    save(matfile,'subj_data','err');
+    writetable(results, fullfile(output, filename));
+
+    Screen('CloseAll');
+    ShowCursor;
+
+    diary off;
+
+    catch err
 
 end

@@ -27,6 +27,7 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
     logfile = fullfile(char(log), sprintf('LOG_%s.log', date));
     assert(isfolder(fileparts(logfile)), "Log directory does not exist: %s", fileparts(logfile));
 
+
     % start log
     diary(char(logfile));
 
@@ -48,12 +49,19 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         'wiscs_subject-%s_run-%d_date-%s.csv', ...
         char(subject), run, date_str ...
     );
-    headers = {'trial', 'onset', 'duration', 'type', 'value', 'keypress', 'rt'};
-    results = table( ...
-        zeros(0,1), zeros(0,1), zeros(0,1), ...
-        strings(0,1), strings(0,1), strings(0,1), zeros(0,1), ...
-        'VariableNames', headers ...
-    );
+
+    % Making the Headers for the CSV Columns
+    filepath = fullfile(output, filename);
+    if ~isfile(filepath)
+
+        headers = cell2table(cell(0,9), ...
+            'VariableNames', ...
+            {'subjectID','run','trial','stimulus','condition',...
+         'buttonResponse','reactionTime','plausibility','trialOnset'});
+
+        writetable(headers, filepath);
+
+    end
 
     % Restrict Keys In Experiment
     KbName('UnifyKeyNames');
@@ -114,36 +122,10 @@ function total_neuroRebus_Project(subject, run, output, practice, dev, log)
         run_start_time = GetSecs;
     end
 
-    %Initialize subject data structure
-        subj_data.subject = subject;
-        subj_data.run = run;
-        subj_data.practice = practice;
-
-        subj_data.run_onset = run_start_time;
-
-        subj_data.trial_onsets = nan(ntrials,1);
-        subj_data.response_onsets = nan(ntrials,1);
-        subj_data.response_times = nan(ntrials,1);
-
-        subj_data.keypress = strings(ntrials,1);
-        subj_data.rt = nan(ntrials,1);
-
-        subj_data.sentences = strings(ntrials,1);
-        subj_data.rebus_word = strings(ntrials,1);
-        subj_data.rebus_index = nan(ntrials,1);
-
-        subj_data.fixation_onsets = nan(ntrials,1);
-
-    %Create .mat file
-        matfile = fullfile(output, ...
-            sprintf('subject-%s_run-%d.mat', char(subject), run));
-        save(matfile, 'subj_data');
-try
-    event_idx = 0;
 
     for idx = 1:ntrials
 
-        type = string(order.type(idx));
+        condition = string(order.type(idx));
         value_idx = order.value(idx);
 
         % Get sentence information from table
@@ -155,10 +137,6 @@ try
 
         % Determine which word is the rebus word
         picWord = regexprep(words(picIndex), '[^\w]', '');
-
-        subj_data.sentences(idx) = string(sentence);
-        subj_data.rebus_word(idx) = string(picWord);
-        subj_data.rebus_index(idx) = picIndex;
 
         % Load image
         imageFile = fullfile(stimpath, 'images', ...
@@ -204,11 +182,9 @@ try
 
         if wordNum == 1
             sentence_onset_abs = flipTime;
-            subj_data.trial_onsets(idx) = sentence_onset_abs;
         end
 
         WaitSecs(wordDuration);
-
     end
 
     Screen('Close', tex);
@@ -221,36 +197,38 @@ try
         'center', ...
         'center', ...
         TEXT_COLOR);
-
+    
     response_onset_abs = Screen('Flip', window);
-    subj_data.response_onsets(idx) = response_onset_abs;
-
-
     [keypress, rt] = collect_response_until( ...
         response_onset_abs + RESPONSE_TIME, ...
         response_onset_abs, ...
         escapeKey ...
     );
-     subj_data.keypress(idx) = string(keypress);
-     subj_data.rt(idx) = rt;
-     if ~isnan(rt)
-        subj_data.response_times(idx) = response_onset_abs + rt;
-     end
-
-    
+    plausibility = ""; % don't know if we're doing a task yet, so I kept this blank
+    trialRow = table( ...
+            string(subject), ...
+            run, ...
+            idx, ...
+            string(picWord), ...
+            condition, ...
+            string(keypress), ...
+            rt, ...
+            plausibility, ...
+            sentence_onset, ...
+            'VariableNames',{ ...
+                'subjectID',...
+                'run',...
+                'trial',...
+                'stimulus',...
+                'condition',...
+                'buttonResponse',...
+                'reactionTime',...
+                'plausibility',...
+                'trialOnset'});
     % Save Sentence
-    event_idx = event_idx + 1;
+    writetable(trialRow, filepath, 'WriteMode', 'Append');
 
-    results(event_idx,:) = { ...
-        idx, ...
-        sentence_onset, ...
-        length(words) * WORD_TIME, ...
-        "sentence", ...
-        sentence, ...
-        keypress, ...
-        rt ...
-    };
-
+   
     % Fixation
     Screen('TextSize', window, FIXATION_SIZE);
 
@@ -261,31 +239,11 @@ try
         TEXT_COLOR);
 
     fix_onset_abs = Screen('Flip', window);
-    subj_data.fixation_onsets(idx) = fix_onset_abs;
-    fix_onset = fix_onset_abs - run_start_time;
     WaitSecs(j(idx));
-    event_idx = event_idx + 1;
-
-    results(event_idx,:) = { ...
-        idx, ...
-        fix_onset, ...
-        j(idx), ...
-        "fixation", ...
-        missing, ...
-        "", ...
-        NaN ...
-    };
     end
-
-    subj_data.runtime = GetSecs - run_start_time;
-    save(matfile,'subj_data','err');
-    writetable(results, fullfile(output, filename));
 
     Screen('CloseAll');
     ShowCursor;
 
     diary off;
-
-    catch err
-
 end

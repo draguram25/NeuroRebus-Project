@@ -4,3 +4,10 @@ subjectID,run,trial,stimulus,condition,buttonResponse,reactionTime,plausibility,
 1,1,3,spaghetti,question,,NaN,,13.7841770959785
 1,1,4,sky,item,,NaN,,19.1287223959807
 1,1,5,spaghetti,question,,NaN,,25.817451067036
+1,1,1,pumpkin,question,,NaN,,0.300380199973006
+1,1,2,sun,item,,NaN,,6.73706087499158
+1,1,1,pumpkin,question,1!,1.35044717096025,,0.0724777409923263
+1,1,2,sun,item,2@,0.150059926963877,,6.20561944297515
+1,1,3,spaghetti,question,,NaN,,13.7225124219549
+1,1,4,sky,item,1!,0.00585869303904474,,19.0627429559827
+1,1,5,spaghetti,question,,NaN,,25.7404375319602
